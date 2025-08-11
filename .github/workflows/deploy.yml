@@ -1,39 +1,58 @@
-name: Build Flutter APK
+name: Build and Deploy Flutter Web & APK
 
 on:
   push:
     branches:
-      - main  # or master depending on your branch name
-  workflow_dispatch: # allows manual run
+      - master
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      # Checkout repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
+      # Install Flutter
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: 'stable'
+          flutter-version: '3.22.0'
 
+      # Install dependencies
       - name: Install dependencies
         run: flutter pub get
 
+      # Build Web App
+      - name: Build Flutter Web
+        run: flutter build web --release
+
+      # Deploy Web App to GitHub Pages
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: build/web
+
+      # Build Android APK
       - name: Build APK
         run: flutter build apk --release
 
+      # Build Android App Bundle (AAB)
+      - name: Build AAB
+        run: flutter build appbundle --release
+
+      # Upload APK
       - name: Upload APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: triptrap-release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
 
-
-  name: Set up Flutter
-  uses: subosito/flutter-action@v2
-  with:
-    channel: stable
-    flutter-version: '3.22.1' 
+      # Upload AAB
+      - name: Upload AAB
+        uses: actions/upload-artifact@v3
+        with:
+          name: triptrap-release-aab
+          path: build/app/outputs/bundle/release/app-release.aab
